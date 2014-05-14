@@ -1,0 +1,45 @@
+# Totally spurious data
+
+Let's say that we collected a covariate but it was totally spurious, what happens to our estimates of $p$?
+
+```{r one-cov, cache=TRUE}
+sample.size <- 1000
+width <- 0.75
+
+ddat <- sim.hn(sample.size,rep(1,sample.size), log(0.3), width)
+
+# covariate is 1/2 distance #+ noise
+#cov1 <- ddat + runif(sample.size,-1,1)
+cov1 <- runif(sample.size,-1,1)
+```
+
+```{r cov1-plot, fig.cap="Plot of distance against a spurious covariate.", cache=TRUE}
+plot(ddat,cov1,xlab="Distance")
+```
+
+Now fitting some models to this data:
+
+```{r fit-cov1, cache=TRUE}
+# build a data.frame
+dat <- data.frame(distance=ddat,cov1=cov1)
+
+# fit a detection function
+mod1 <- ds(dat,truncation=width)
+
+# fit with covariates
+mod1.cov <- ds(dat,truncation=width,formula=~cov1)
+
+summary(mod1)
+summary(mod1.cov)
+```
+
+Looks like we are fine in terms of average $p$ and $\hat{N}$.
+
+Plotting models reveals something interesting: 
+
+```{r cov1-model-plot, fig.cap="Detection function plots for models with and without the spurious covariate.", fig.width=8, fig.height=4, cache=TRUE}
+par(mfrow=c(1,2))
+plot(mod1)
+plot(mod1.cov)
+```
+

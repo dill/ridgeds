@@ -1,0 +1,314 @@
+# Ridge regression for distance sampling detection functions
+
+**David L. Miller**
+
+
+## Abstract
+
+Correlation between covariates in detection function models is an acknowledged but as yet unaddressed issue in the distance sampling literature. Covariates that affect detectability, such as search distance or sea state, are highly correlated with distance as well as each other. Inference drawn from models which contain highly correlated covariates may be spurious and such models may have optimisation issues. Variable selection and shrinkage methods for correlated covariates are well-covered topics in the linear modelling literature. Here methods commonly used in regression (such as ridge regression, lasso, principle components, etc) are explored for their utility in modelling detection functions. Particular attention is paid to the interpretability of resulting models.
+
+## Initial experiments
+
+First need to see what's going on here. Begin by looking at the behaviour of the detection function fitting when we add covariates that are correlated with the observed distance.
+
+
+`r opts_chunk$set(fig.path='figs/',cache.path='.cache/',fig.width=8, fig.height=4, cache=TRUE,fig.cap="")`
+
+
+```{r preamble, cache=TRUE}
+library(mrds)
+library(Distance)
+set.seed(123)
+```
+
+To simulate from a half-normal distribution.
+
+```{r generation, cache=TRUE}
+sim.hn <- function(n,z,beta,width){
+  sigma <- function(z,beta){
+    # z has n rows (# obs)
+    #       p cols (length beta)
+    exp(as.matrix(z)%*%beta)
+  }
+
+  d <- abs(rnorm(2*n, 0, sigma(z,beta)))
+  d <- d[d <= width] # only obsns within truncation
+  d[1:n] # we generated 2n samples, just take the first n
+}
+```
+
+### Simplest possible case
+
+That is the simplest possible case where we can observe some interesting behaviour? Including distance as a covariate. So a model of the form:
+
+$$
+g(x;\mathbf{\beta}) = \exp \left( -\frac{x^2}{2 \sigma(x)^2} \right)
+$$
+
+where
+
+$$
+\sigma(x) = \exp \left( \beta_0 + \beta_1 x\right)
+$$
+
+So let's do that.
+
+```{r dist-cov, cache=TRUE}
+sample.size <- 1000
+width <- 0.75
+
+# generate that data
+distcov <- sim.hn(sample.size,rep(1,sample.size), log(0.3), width)
+
+# looks good
+hist(distcov,main="Histogram of distance/cov1",xlab="Distance/cov1")
+
+# now build a data.frame
+dat.cov1 <- data.frame(distance = distcov,
+                       cov1     = distcov)
+```
+
+Now let's fit a model with and without the covariate:
+
+```{r dist-cov-models, cache=TRUE}
+mod.nocov <- ds(dat.cov1,adjustment=NULL,truncation=0.75)
+mod.cov1  <- ds(dat.cov1,adjustment=NULL,formula=~cov1,truncation=0.75)
+```
+
+```{r dist-cov1-models-plot, cache=TRUE, fig.width=7, fig.cap=""}
+par(mfrow=c(1,2))
+plot(mod.nocov,main="Detection function with no covariates")
+plot(mod.cov1,main="Detection function with cov1")
+```
+
+Well that was pretty horrible/weird. What if we set the starting values so that we are "right":
+
+```{r dist-cov-models-st, cache=TRUE}
+mod.cov1.st  <- ds(dat.cov1,adjustment=NULL,formula=~cov1,truncation=0.75,
+                   initial.values=list(scale=c(-1.199874,0)))
+mod.cov1.st$ddf$par
+```
+
+No effect there.
+
+But, is this actually that bad? IF the covariate is so highly correlated with distance, can we just acknowledge that these factors play off against each other but given that the covariate and distance will always have the same value in this example, will we be okay? Well, no. Looking at the AICs:
+
+```{r dist-cov-aic,cache=TRUE}
+mod.cov1$ddf$criterion
+mod.nocov$ddf$criterion
+```
+
+we would select the covariate model, but there is a huge difference in the reported $\hat{P_a}$ (and hence estimated abundance):
+
+```{r dist-cov-p,cache=TRUE}
+summary(mod.cov1$ddf)$average.p
+summary(mod.nocov$ddf)$average.p
+
+summary(mod.nocov$ddf)$average.p/summary(mod.cov1$ddf)$average.p
+```
+
+#### Transformed covariates
+
+Also note that it's common to standardize covariate values by dividing through by their standard deviation to avoid numerical issues (this is not necessary here since distances were in $(0,0.75)$). This kind of standardisation makes no difference to the fit, but sometimes people like to do other transformations, like $\log$s: 
+
+```{r dist-cov-model-loge, cache=TRUE}
+dat.cov1$cov1.log <- log(dat.cov1$cov1)
+mod.cov1.log  <- ds(dat.cov1,adjustment=NULL,formula=~cov1.log)
+summary(mod.cov1.log)
+plot(mod.cov1.log,main="Detection function with log(cov1)")
+```
+
+Again, completely terrifying.
+
+### What's going on?
+
+Why is this happening? Well, we're basically fitting the following model:
+
+$$
+g(x;\mathbf{\beta}) = \exp \left( -\frac{x^2}{2 \exp(\beta_0 + beta_1 x)^2} \right)
+$$
+
+that detection function looks like this:
+
+```{r dist-df-plot,cache=TRUE}
+x<-seq(0,1,len=200)
+f<-function(x,beta0,beta1){exp(-0.5*x^2)^(exp(-2*(beta0+beta1*x)))}
+par(mfrow=c(1,3))
+plot(x,f(x,-3,0),main="beta0=-3, beta1=0",ylim=c(0,1),type="l")
+plot(x,f(x,-3.46,9.43),main="beta0=-3.46, beta1=9.43",ylim=c(0,1),type="l")
+plot(x,f(x,-3.46,4),main="beta0=-3.46, beta1=4",ylim=c(0,1),type="l")
+```
+
+So some pretty weird (and non-monotonic!) shapes are possible (and we can't constrain them). BUT, bear in mind that the way we calculate the $p$s is a bit weird is not quite by integrating the above. We integrate over $x$ for fixed values of the covariates (the observed values). So infact we have plots like this:
+
+```{r dist-df-marginal-plot,cache=TRUE,fig.height=8}
+x <- seq(0,1,len=200)
+z <- seq(0,1,len=6)
+f <- function(x,z,beta0,beta1){exp(-0.5*x^2)^(exp(-2*(beta0+beta1*z)))}
+par(mfrow=c(2,3))
+for(zz in z){
+  plot(x,f(x,zz,-3.46,9.43),main=paste0("z=",zz),ylim=c(0,1),
+       ylab="Probability of detection",xlab="Distance",type="l")
+}
+```
+
+which, once you make a pointwise average is:
+
+```{r dist-df-plot-ptavg,cache=TRUE,fig.width=4}
+pt.avg <- apply(matrix(x,ncol=1),1,f,x=x,beta0=-3.46,beta1=9.43)
+pt.avg <- rowMeans(pt.avg)
+plot(x,pt.avg,main="Average detection function",ylim=c(0,1),
+     ylab="Probability of detection",xlab="Distance",type="l")
+```
+
+which looks more like a real (but horrible) detection function.
+
+So, what does this mean? Past a certain distance we have that the probability of detection is certain at all distances (bottom row of the above plots). That seems wrong.
+
+Doing the same experiment with the logged data:
+
+```{r dist-df-marginal-log-plot,cache=TRUE,fig.height=8}
+z <- log(seq(0,1,len=6))
+par(mfrow=c(2,3))
+for(zz in z){
+  # parameters from the fitted model 
+  plot(x,f(x,zz,0.2297265,1.0742413),main=paste0("log(z)=",round(zz,3)),
+       ylim=c(0,1), ylab="Probability of detection", xlab="Distance",type="l")
+}
+```
+
+```{r dist-df-log-plot-ptavg,cache=TRUE,fig.width=4}
+pt.avg <- apply(matrix(log(x),ncol=1),1,f,x=x,beta0=0.2297265,beta1=1.0742413)
+pt.avg <- rowMeans(pt.avg)
+plot(x,pt.avg,main="Average detection function",ylim=c(0,1),
+     ylab="Probability of detection",xlab="Distance",type="l")
+```
+
+
+### What does the likelihood surface look like?
+
+```{r dist-liksurf,cache=TRUE}
+n.res0 <- n.res1 <- 50
+f <- function(x,z,beta0,beta1){exp(-0.5*x^2)^(exp(-2*(beta0+beta1*z)))}
+
+lik <- function(pars,x){
+  int <-apply(matrix(x,ncol=1),1,
+              function(z){integrate(f,lower=0,upper=0.75,z=z,
+                                    beta0=pars[1],beta1=pars[2])$value})
+  sum(log(f(x,x,pars[1],pars[2])/as.vector(int)))
+}
+
+
+beta0.seq <- seq(-3.75,-2.75,len=n.res0)
+beta1.seq <- seq(8,10,len=n.res1)
+
+par.grid <- expand.grid(beta0=beta0.seq,
+                        beta1=beta1.seq)
+l.eval <- apply(par.grid,1,lik,x=dat.cov1$distance)
+```
+
+```{r dist-liksurf-plot,cache=TRUE,fig.height=8}
+image(matrix(l.eval,n.res0,n.res1),
+      x=beta0.seq, y=beta1.seq,
+      col=heat.colors(1000),asp=1)
+contour(matrix(l.eval,n.res0,n.res1),
+      x=beta0.seq, y=beta1.seq, add=TRUE)
+points(mod.cov1$ddf$par[1],mod.cov1$ddf$par[2])
+```
+
+
+
+
+
+
+
+
+### Factors
+
+What about adding a factor covariate which is a binned version of the distance observations? This is like "sea state" or other measures since they will be highly correlated with distance.
+
+```{r factor-dist-dat}
+bins <- cut(ddat,c(0,0.05,0.1,0.3,0.6,1))
+# build a data.frame
+dat <- data.frame(distance=ddat,fac1=bins)
+```
+
+```{r facplot, fig.cap="Factor sea state-type data", fig.width=4, fig.height=4, cache=TRUE}
+plot(dat$distance,dat$fac1,xlab="Distance",ylab="\"sea state\"")
+```
+
+```{r factor-dist}
+# fit with covariates
+mod1.fac <- ds(dat,truncation=width,formula=~as.factor(fac1))
+
+summary(mod1)
+summary(mod1.fac)
+```
+
+So, BIG change in average $p$, $\hat{N}$ and a big change in precision.
+
+Usually folks try sea state at a few different "coarsenesses", let's try three factors:
+
+
+```{r factor-dist-3lev}
+bins3 <- cut(ddat,c(0,0.1,0.3,1))
+# build a data.frame
+dat <- data.frame(distance=ddat,fac3=bins3)
+
+# fit 
+mod1.fac.3lev <- ds(dat,truncation=width,formula=~as.factor(fac3))
+
+summary(mod1.fac3)
+```
+
+Less bad, but still quite bad.
+
+Sometimes we fit those factors as a continuous variable too:
+
+
+```{r nofactor-dist}
+dat <- data.frame(distance=ddat,nfac=as.numeric(bins))
+# fit with covariates
+mod1.nfac <- ds(dat,truncation=width,formula=~nfac)
+
+summary(mod1)
+summary(mod1.nfac)
+```
+
+
+## Sø.
+
+Clearly correlated covariates have an effect. What we really want to do is take the extra information that we get from the covariates: stuff that we don't get from distance.
+
+I don't think we want to mess around with the distances.
+
+IS THIS TRUE: given a covariate value, $\pi$ is constant?
+
+ADS chapter 3: **Assuming that $y$ and $z$ are independent (which holds under random line or point placement), then $\pi(y, z) = \pi(y)\pi(z)$**, where $\pi(y)$ is the $\pi(z)$
+
+
+The above will remain true IF we do a manipulation of the covariates BEFORE we put them in the model.
+
+
+### What about linear models?
+
+```{r linearmodels}
+this.lm <- lm(distance~nfac,data=dat)
+
+# take the residuals?
+dat.r <- data.frame(distance=ddat,resids=residuals(this.lm,type="response")) 
+
+
+mod1.resids <- ds(dat.r,truncation=width,formula=~resids)
+
+summary(mod1)
+summary(mod1.resids)
+
+```
+
+
+
+
+
+
+
