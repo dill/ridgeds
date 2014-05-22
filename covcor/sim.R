@@ -22,6 +22,8 @@ registerDoMC()
 n.sims <- 200
 # number of distances observed
 n.samps <- c(30,60,120,240,480)
+# correlations
+corrs <- c(0.7,0.8,0.9)
 # truncation
 width <- 0.75
 #parameters
@@ -30,7 +32,7 @@ pars <- c(log(0.3),log(1.5))
 formula <- ~cov1
 
 ## test plots
-corr <- 0.8
+#corr <- 0.8
 #sample.size <- 1000
 #covdata <- data.frame(cov1=rnorm(sample.size))
 #covdata$cov2 <- corr*covdata$cov1 + sqrt(1-corr^2)*rnorm(sample.size)
@@ -47,7 +49,18 @@ corr <- 0.8
 
 big.res <- c()
 
-for(sample.size in n.samps){
+# build the simulation settings
+setting.grid <- expand.grid(corr=corrs,
+                            sample.size=n.samps)
+
+
+for(i in 1:nrow(setting.grid)){
+
+  # grab this set of simulation settings
+  these.settings <- setting.grid[i,]
+  corr <- these.settings$corr
+  sample.size <- these.settings$sample.size
+
   # loop over sims
   results <- foreach(sim = 1:n.sims, .combine=rbind,
                    .inorder=FALSE, .init=c()) %dopar% {
@@ -74,17 +87,18 @@ for(sample.size in n.samps){
     mod12.cov <- try(ds(this.data,truncation=width,formula=~cov1+cov2))
     res <- store_results(mod12.cov, "hn+cov1+cov2", sample.size, sim, res)
 
-    # hazard rate
-    mod1.hr <- try(ds(this.data,truncation=width,key="hr"))
-    res <- store_results(mod1.hr, "hr", sample.size, sim, res)
-
-    # hazard rate with covariate 1
-    mod1.hr.cov <- try(ds(this.data,truncation=width,formula=~cov1,key="hr"))
-    res <- store_results(mod1.hr.cov, "hr+cov1", sample.size, sim, res)
-
-    # hazard rate with covariate 1 + 2
-    mod12.hr.cov <- try(ds(this.data,truncation=width,formula=~cov1+cov2,key="hr"))
-    res <- store_results(mod12.hr.cov, "hr+cov1+cov2", sample.size, sim, res)
+#    # hazard rate
+#    mod1.hr <- try(ds(this.data,truncation=width,key="hr"))
+#    res <- store_results(mod1.hr, "hr", sample.size, sim, res)
+#
+#    # hazard rate with covariate 1
+#    mod1.hr.cov <- try(ds(this.data,truncation=width,formula=~cov1,key="hr"))
+#    res <- store_results(mod1.hr.cov, "hr+cov1", sample.size, sim, res)
+#
+#    # hazard rate with covariate 1 + 2
+#    mod12.hr.cov <- try(ds(this.data,truncation=width,formula=~cov1+cov2,
+#                           key="hr"))
+#    res <- store_results(mod12.hr.cov, "hr+cov1+cov2", sample.size, sim, res)
 
     return(res)
   }
@@ -93,8 +107,5 @@ for(sample.size in n.samps){
 }
 
 write.csv(big.res, file="covcor.csv")
-
-
-
 
 
