@@ -74,30 +74,30 @@ for(i in 1:nrow(setting.grid)){
     this.data <- make.data(sample.size,width,pars,covdata,formula)
 
     # fit the "true" model -- model data was generated from
-    mod1 <- try(ds(this.data,truncation=width))
+    mod1 <- try(ds(this.data,truncation=width,order=0))
     res <- store_results(mod1, "hn", sample.size, sim, res)
 
     ## fit with "wrong" models...
 
     # hn with covariate 1
-    mod1.cov <- try(ds(this.data,truncation=width,formula=~cov1))
+    mod1.cov <- try(ds(this.data,truncation=width,formula=~cov1,order=0))
     res <- store_results(mod1.cov, "hn+cov1", sample.size, sim, res)
 
     # hn with covariate 1 + 2
-    mod12.cov <- try(ds(this.data,truncation=width,formula=~cov1+cov2))
+    mod12.cov <- try(ds(this.data,truncation=width,formula=~cov1+cov2,order=0))
     res <- store_results(mod12.cov, "hn+cov1+cov2", sample.size, sim, res)
 
 #    # hazard rate
-#    mod1.hr <- try(ds(this.data,truncation=width,key="hr"))
+#    mod1.hr <- try(ds(this.data,truncation=width,key="hr",order=0))
 #    res <- store_results(mod1.hr, "hr", sample.size, sim, res)
 #
 #    # hazard rate with covariate 1
-#    mod1.hr.cov <- try(ds(this.data,truncation=width,formula=~cov1,key="hr"))
+#    mod1.hr.cov <- try(ds(this.data,truncation=width,formula=~cov1,key="hr",order=0))
 #    res <- store_results(mod1.hr.cov, "hr+cov1", sample.size, sim, res)
 #
 #    # hazard rate with covariate 1 + 2
 #    mod12.hr.cov <- try(ds(this.data,truncation=width,formula=~cov1+cov2,
-#                           key="hr"))
+#                           key="hr",order=0))
 #    res <- store_results(mod12.hr.cov, "hr+cov1+cov2", sample.size, sim, res)
 
     return(res)
