@@ -14,7 +14,7 @@ source("../generic_sim_fns/sim.hn.R")
 source("../generic_sim_fns/make.data.R")
 source("../generic_sim_fns/store_results.R")
 
-options(cores=2)
+options(cores=4)
 registerDoMC()
 
 ## options
