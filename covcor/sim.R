@@ -52,6 +52,8 @@ for(sample.size in n.samps){
   results <- foreach(sim = 1:n.sims, .combine=rbind,
                    .inorder=FALSE, .init=c()) %dopar% {
 
+    res <- c()
+
     ## generate data
     covdata <- data.frame(cov1=rnorm(sample.size))
     covdata$cov2 <- corr*covdata$cov1 + sqrt(1-corr^2)*rnorm(sample.size)
