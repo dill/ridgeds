@@ -1,5 +1,5 @@
 # shortcut function to store results
-store_results <- function(mod, model.name, sample.size, sim, res){
+store_results <- function(mod, model.name, sample.size, sim, res, corr=0){
   # mod         - fitted model object (call was wrapped in a try())
   # model.name  - string to identify model
   # sample.size - number of observations
@@ -14,7 +14,7 @@ store_results <- function(mod, model.name, sample.size, sim, res){
   b0 <- NA
 
   # other variables
-  other.vars <- c(sim, sample.size, model.name)
+  other.vars <- c(sim, sample.size, model.name, corr)
 
   # if fitting went okay, then store some values
   if(!is.null(mod)){
