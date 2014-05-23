@@ -12,6 +12,7 @@ store_results <- function(mod, model.name, sample.size, sim, res, corr=0){
   cov1 <- NA
   cov2 <- NA
   b0 <- NA
+  aic <- NA
 
   # other variables
   other.vars <- c(sim, sample.size, model.name, corr)
@@ -31,6 +32,9 @@ store_results <- function(mod, model.name, sample.size, sim, res, corr=0){
         if(!is.null(mod$ddf$par["cov2"])){
           cov2 <- mod$ddf$par["cov2"]
         }
+
+        aic <- mod$ddf$criterion
+
       }
     }
   }
@@ -39,6 +43,7 @@ store_results <- function(mod, model.name, sample.size, sim, res, corr=0){
                c(other.vars, "b0", b0),
                c(other.vars, "cov1", cov1),
                c(other.vars, "cov2", cov2),
+               c(other.vars, "aic", aic),
                c(other.vars, "varp", varp))
   return(res)
 }
