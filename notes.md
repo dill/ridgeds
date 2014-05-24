@@ -10,8 +10,11 @@ Extra notes on `ridgeds`
 
 Last one is probably most interesting to most people.
 
+Thoughts: 
+  * How do we simulate these situations?
+  * Not really a problem if we don't select the variable by AIC?
 
-How do we simulate these situations?
+
 
 
 ## 1. Covariates correlated with distance
@@ -29,8 +32,15 @@ Becker and Quang (2009) JABES (p. 211) has a description of search distance -- s
 
 ## 2. junk data
 
+May as well do this as uniform(0,1) as we can always normalise the covariate values? Maybe uniform(-1,1) ?
 
 ## 3. correlated covariates
 
+Which model comes out AIC best?
 
+Compare $P_a$:
+  * bias?
+  * variance?
+
+Compare parameter estimates
 
