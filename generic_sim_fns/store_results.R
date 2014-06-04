@@ -21,7 +21,11 @@ store_results <- function(mod, model.name, sample.size, sim, res, corr=0){
   if(!is.null(mod)){
     if(class(mod)!="try-error"){
       if(!is.null(mod$ddf)){
+
+        # average p is n/Nhat
         p <- sample.size/mod$ddf$Nhat
+
+        # variance of average p
         varp <- summary(mod$ddf)$average.p.se
 
         # pull out parameters
