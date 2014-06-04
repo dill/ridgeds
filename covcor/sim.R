@@ -33,12 +33,12 @@ formula <- ~cov1
 
 #a<-0.45;b<-0.45
 a<-0.9;b<-0.6
+betamean <- a/(a+b)
+betavar <- (a*b)/((a+b)^2 * (a+b+1))
 #### testing parameters
 #corr <- 0.8
 #sample.size <- 100
 ##covdata <- data.frame(cov1=rnorm(sample.size))
-#betamean <- a/(a+b)
-#betavar <- (a*b)/((a+b)^2 * (a+b+1))
 #covdata <- data.frame(cov1=2*(rbeta(sample.size,a,b)-1/2))
 #covdata$cov2 <- corr*covdata$cov1 + sqrt(1-corr^2)*rnorm(sample.size,betamean,sqrt(betavar))
 
