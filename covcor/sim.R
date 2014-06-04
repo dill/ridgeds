@@ -27,23 +27,25 @@ corrs <- c(0.7,0.8,0.9)
 # truncation
 width <- 1
 #parameters
-pars <- c(log(0.75),1.2)
+#pars <- c(log(0.75),1.2)
+pars <- c(log(0.95),1.2) # for a<-0.4;b<-5
 # formula used to *generate* the data
 formula <- ~cov1
 
 #a<-0.45;b<-0.45
-a<-0.9;b<-0.6
+#a<-0.9;b<-0.6
+a<-0.4;b<-5
 betamean <- a/(a+b)
 betavar <- (a*b)/((a+b)^2 * (a+b+1))
-#### testing parameters
-#corr <- 0.8
-#sample.size <- 100
-##covdata <- data.frame(cov1=rnorm(sample.size))
-#covdata <- data.frame(cov1=2*(rbeta(sample.size,a,b)-1/2))
-#covdata$cov2 <- corr*covdata$cov1 + sqrt(1-corr^2)*rnorm(sample.size,betamean,sqrt(betavar))
+### testing parameters
+corr <- 0.8
+sample.size <- 100
+#covdata <- data.frame(cov1=rnorm(sample.size))
+covdata <- data.frame(cov1=2*(rbeta(sample.size,a,b)-1/2))
+covdata$cov2 <- corr*covdata$cov1 + sqrt(1-corr^2)*rnorm(sample.size,betamean,sqrt(betavar))
 
-## make the distance data frame
-#this.data <- make.data(sample.size,width,pars,covdata,formula)
+# make the distance data frame
+this.data <- make.data(sample.size,width,pars,covdata,formula)
 
 ## plot that
 #par(mfrow=c(2,3))
@@ -55,13 +57,13 @@ betavar <- (a*b)/((a+b)^2 * (a+b+1))
 #hist(this.data$cov2,xlab="cov2")
 
 
-#mod1 <- try(ds(this.data,truncation=width,order=0))
-#mod1.cov <- try(ds(this.data,truncation=width,formula=~cov1,order=0))
-#mod12.cov <- try(ds(this.data,truncation=width,formula=~cov1+cov2,order=0))
-#par(mfrow=c(1,3))
-#plot(mod1)
-#plot(mod1.cov)
-#plot(mod12.cov)
+mod1 <- try(ds(this.data,truncation=width,order=0))
+mod1.cov <- try(ds(this.data,truncation=width,formula=~cov1,order=0))
+mod12.cov <- try(ds(this.data,truncation=width,formula=~cov1+cov2,order=0))
+par(mfrow=c(1,3))
+plot(mod1)
+plot(mod1.cov)
+plot(mod12.cov)
 
 #####################
 

@@ -3,7 +3,7 @@
 options(stingsAsFactors=FALSE)
 library(ggplot2)
 library(plyr)
-big.res <- read.csv("covcor.csv")
+big.res <- read.csv("covcor-0.9-0.6.csv")
 
 
 ## quick plot
@@ -15,15 +15,6 @@ names(results) <- c("sim","n","model","corr","parameter","value")
 # drop some of the results
 results <- results[!grepl("hr",results$model),]
 #results <- results[results$n!=30,]
-
-## true p lines
-#int1 <- integrate(function(x,pars){
-#                    exp(-x^2/(2*exp(pars)^2))
-#                  },
-#                  upper=0.75, lower=0, pars=log(0.3))
-#pa.lines <- data.frame(true.p = rep(int1$value/0.75,length(unique(results$n))),
-#                       metric = rep("average p",length(unique(results$n))),
-#                       n      = unique(results$n))
 
 presults <- results[results$parameter=="p",]
 p <- ggplot(presults)
@@ -135,19 +126,18 @@ unambig.aic.winner <- function(x){
 unambig.aicw <- ddply(aicres,.(sim,corr,n),unambig.aic.winner)
 unambig.aicw <- unambig.aicw[!is.na(unambig.aicw$V1),]
 
-pd <- ggplot(unambig.aicw)
-pd <- pd + geom_histogram(aes(V1))#,binwidth=0.01)
-pd <- pd + facet_grid(corr~n,scales="free")
-print(pd)
+uapd <- ggplot(unambig.aicw)
+uapd <- uapd + geom_histogram(aes(V1))#,binwidth=0.01)
+uapd <- uapd + facet_grid(corr~n)
+print(uapd)
 
 
 # what about variance issues?
 pvarresults <- results[results$parameter=="varp",]
 p <- ggplot(pvarresults)
 p <- p + geom_boxplot(aes(x=model,y=value))
-p <- p + facet_grid(corr~n,scales="free_y")
+p <- p + facet_wrap(corr~n,scales="free_y",nrow=3)
 #p <- p + geom_hline(aes(yintercept=true.p),data=pa.lines)
-p <- p + scale_y_continuous(limits=c(0,1))
 #p <- p + coord_cartesian(ylim=c(0.25,1))
 print(p)
 
