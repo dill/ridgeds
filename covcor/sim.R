@@ -19,7 +19,7 @@ registerDoMC()
 
 ## options
 # number of simulations to do per sample size
-n.sims <- 2
+n.sims <- 200
 # number of distances observed
 n.samps <- c(30,60,120,240,480)
 # correlations
