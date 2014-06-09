@@ -3,7 +3,7 @@
 options(stingsAsFactors=FALSE)
 library(ggplot2)
 library(plyr)
-big.res <- read.csv("covcor-0.9-0.6.csv")
+big.res <- read.csv("covcor-0.4-5.csv")
 
 
 ## quick plot
@@ -24,6 +24,7 @@ p <- p + facet_grid(corr~n,scales="free_y")
 #p <- p + scale_y_continuous(limits=c(0,1))
 p <- p + coord_cartesian(ylim=c(0.25,1))
 print(p)
+dev.new()
 
 # how do estimates of beta_0 change?
 # want to compare b_0 estimates between model with cov1 and cov1+cov2
@@ -38,6 +39,7 @@ boxb0 <- boxb0 + geom_boxplot(aes(x=model,y=value))
 boxb0 <- boxb0 + facet_wrap(corr~n,scales="free",nrow=3)
 boxb0 <- boxb0 + geom_hline(aes(yintercept=pars[1]))
 print(boxb0)
+dev.new()
 
 
 # how do coefficient estimates change per sim between models
@@ -48,6 +50,7 @@ pb <- pb + geom_point(aes(x=model,y=value))
 pb <- pb + geom_line(aes(x=model,y=value,group=sim),alpha=0.5)
 pb <- pb + facet_grid(corr~n,scales="free_y")
 print(pb)
+dev.new()
 
 
 
@@ -74,6 +77,7 @@ boxcov1 <- boxcov1 + geom_boxplot(aes(x=model,y=value))
 boxcov1 <- boxcov1 + facet_wrap(corr~n,scales="free",nrow=3)
 boxcov1 <- boxcov1 + geom_hline(aes(yintercept=pars[1]),colour="red")
 print(boxcov1)
+dev.new()
 
 # only for cov1 and cov1+cov2 models
 cov1res <- cov1res[cov1res$model%in%c("hn+cov1","hn+cov1+cov2"),]
@@ -83,6 +87,7 @@ pb <- pb + geom_point(aes(x=model,y=value))
 pb <- pb + geom_line(aes(x=model,y=value,group=sim),alpha=0.5)
 pb <- pb + facet_grid(corr~n,scales="free_y")
 print(pb)
+dev.new()
 
 
 ## performing a sign test on these differences give non-significant result
@@ -108,6 +113,7 @@ pd <- ggplot(aicw)
 pd <- pd + geom_histogram(aes(V1))#,binwidth=0.01)
 pd <- pd + facet_grid(corr~n,scales="free")
 print(pd)
+dev.new()
 
 # how many AIC winners were better by more than 3 points than BOTH
 # models -- i.e. unambiguous winner
@@ -130,6 +136,7 @@ uapd <- ggplot(unambig.aicw)
 uapd <- uapd + geom_histogram(aes(V1))#,binwidth=0.01)
 uapd <- uapd + facet_grid(corr~n)
 print(uapd)
+dev.new()
 
 
 # what about variance issues?
@@ -140,6 +147,7 @@ p <- p + facet_wrap(corr~n,scales="free_y",nrow=3)
 #p <- p + geom_hline(aes(yintercept=true.p),data=pa.lines)
 #p <- p + coord_cartesian(ylim=c(0.25,1))
 print(p)
+dev.new()
 
 
 
