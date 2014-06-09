@@ -57,7 +57,7 @@ formula <- ~cov1
 ### T distributed covariates
 # semi-stolen from Marques et al (2007)
 library(tmvtnorm)
-pars <- c(log(0.9),-0.3)
+pars <- c(log(0.9),-0.8)
 #corr <- NA#0.8
 #sample.size <- 250
 #covdata <- data.frame(cov1=rtmvt(sample.size,mean=100,

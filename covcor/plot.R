@@ -3,7 +3,7 @@
 options(stingsAsFactors=FALSE)
 library(ggplot2)
 library(plyr)
-big.res <- read.csv("covcor-0.4-5.csv")
+big.res <- read.csv("covcor-t.csv")
 
 
 ## quick plot
@@ -11,10 +11,6 @@ big.res <- read.csv("covcor-0.4-5.csv")
 results <- as.data.frame(big.res)
 results <- results[,-1]
 names(results) <- c("sim","n","model","corr","parameter","value")
-
-# drop some of the results
-results <- results[!grepl("hr",results$model),]
-#results <- results[results$n!=30,]
 
 presults <- results[results$parameter=="p",]
 p <- ggplot(presults)
