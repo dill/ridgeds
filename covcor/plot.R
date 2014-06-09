@@ -3,7 +3,7 @@
 options(stingsAsFactors=FALSE)
 library(ggplot2)
 library(plyr)
-big.res <- read.csv("covcor-t.csv")
+big.res <- read.csv("covcor-beta-1--1.2.csv")
 
 
 ## quick plot
@@ -19,6 +19,7 @@ p <- p + facet_grid(corr~n,scales="free_y")
 #p <- p + geom_hline(aes(yintercept=true.p),data=pa.lines)
 #p <- p + scale_y_continuous(limits=c(0,1))
 p <- p + coord_cartesian(ylim=c(0.25,1))
+p <- p + ggtitle("average p")
 print(p)
 dev.new()
 
@@ -34,6 +35,7 @@ boxb0 <- ggplot(b0res)
 boxb0 <- boxb0 + geom_boxplot(aes(x=model,y=value))
 boxb0 <- boxb0 + facet_wrap(corr~n,scales="free",nrow=3)
 boxb0 <- boxb0 + geom_hline(aes(yintercept=pars[1]))
+boxb0 <- boxb0 + ggtitle("b0 estimates")
 print(boxb0)
 dev.new()
 
@@ -45,6 +47,7 @@ pb <- ggplot(b0res)
 pb <- pb + geom_point(aes(x=model,y=value))
 pb <- pb + geom_line(aes(x=model,y=value,group=sim),alpha=0.5)
 pb <- pb + facet_grid(corr~n,scales="free_y")
+pb <- pb + ggtitle("b0 estimates")
 print(pb)
 dev.new()
 
@@ -72,6 +75,7 @@ boxcov1 <- ggplot(cov1res)
 boxcov1 <- boxcov1 + geom_boxplot(aes(x=model,y=value))
 boxcov1 <- boxcov1 + facet_wrap(corr~n,scales="free",nrow=3)
 boxcov1 <- boxcov1 + geom_hline(aes(yintercept=pars[1]),colour="red")
+boxcov1 <- boxcov1 + ggtitle("cov1 estimates")
 print(boxcov1)
 dev.new()
 
@@ -82,6 +86,7 @@ pb <- ggplot(cov1res)
 pb <- pb + geom_point(aes(x=model,y=value))
 pb <- pb + geom_line(aes(x=model,y=value,group=sim),alpha=0.5)
 pb <- pb + facet_grid(corr~n,scales="free_y")
+pb <- pb + ggtitle("cov1 estimates")
 print(pb)
 dev.new()
 
@@ -96,8 +101,6 @@ dev.new()
 #print(pd)
 
 
-
-
 # which was the winner?
 aicres <- results[results$parameter=="aic",]
 
@@ -108,6 +111,7 @@ aicw <- ddply(aicres,.(sim,corr,n),aic.winner)
 pd <- ggplot(aicw)
 pd <- pd + geom_histogram(aes(V1))#,binwidth=0.01)
 pd <- pd + facet_grid(corr~n,scales="free")
+pd <- pd + ggtitle("AIC winners")
 print(pd)
 dev.new()
 
@@ -131,6 +135,7 @@ unambig.aicw <- unambig.aicw[!is.na(unambig.aicw$V1),]
 uapd <- ggplot(unambig.aicw)
 uapd <- uapd + geom_histogram(aes(V1))#,binwidth=0.01)
 uapd <- uapd + facet_grid(corr~n)
+uapd <- uapd + ggtitle("unambiguous AIC winners")
 print(uapd)
 dev.new()
 
@@ -142,8 +147,8 @@ p <- p + geom_boxplot(aes(x=model,y=value))
 p <- p + facet_wrap(corr~n,scales="free_y",nrow=3)
 #p <- p + geom_hline(aes(yintercept=true.p),data=pa.lines)
 #p <- p + coord_cartesian(ylim=c(0.25,1))
+p <- p + ggtitle("variance")
 print(p)
-dev.new()
 
 
 
