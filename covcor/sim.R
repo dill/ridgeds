@@ -30,35 +30,10 @@ width <- 1
 formula <- ~cov1
 
 ### BETA distributed covariates
-### beta testing
 a<-0.45;b<-0.45
 pars <- c(1,-1.2)
 betamean <- a/(a+b)
 betavar <- (a*b)/((a+b)^2 * (a+b+1))
-### testing parameters
-#corr <- 0.8
-#sample.size <- 1000
-##covdata <- data.frame(cov1=rnorm(sample.size))
-#covdata <- data.frame(cov1=rbeta(sample.size,a,b))
-#covdata$cov2 <- corr*covdata$cov1 + sqrt(1-corr^2)*rnorm(sample.size,betamean,sqrt(betavar))
-
-#### plot that
-#par(mfrow=c(2,3))
-#plot(this.data$distance,this.data$cov1,xlab="Distance",ylab="cov1")
-#plot(this.data$distance,this.data$cov2,xlab="Distance",ylab="cov2")
-#plot(this.data$cov1,this.data$cov2,xlab="cov1",ylab="cov2")
-#hist(this.data$distance,xlab="Distance")
-#hist(this.data$cov1,xlab="cov1")
-#hist(this.data$cov2,xlab="cov2")
-#
-#
-#mod1 <- try(ds(this.data,truncation=width,order=0))
-#mod1.cov <- try(ds(this.data,truncation=width,formula=~cov1,order=0))
-#mod12.cov <- try(ds(this.data,truncation=width,formula=~cov1+as.factor(cov2),order=0))
-#par(mfrow=c(1,3))
-#plot(mod1)
-#plot(mod1.cov)
-#plot(mod12.cov)
 
 #####################
 

@@ -1,8 +1,8 @@
 # shortcut function to store results
-store_results <- function(mod, model.name, sample.size, sim, res, corr=0){
+store_results <- function(mod, model.name, pop.size, sim, res, corr=0){
   # mod         - fitted model object (call was wrapped in a try())
   # model.name  - string to identify model
-  # sample.size - number of observations
+  # pop.size    - population size
   # sim         - simulation id
   # results     - data.frame to append to
 
@@ -13,9 +13,10 @@ store_results <- function(mod, model.name, sample.size, sim, res, corr=0){
   cov2 <- NA
   b0 <- NA
   aic <- NA
+  n <- NA
 
   # other variables
-  other.vars <- c(sim, sample.size, model.name, corr)
+  other.vars <- c(sim, pop.size, model.name, corr)
 
   # if fitting went okay, then store some values
   if(!is.null(mod)){
@@ -23,7 +24,7 @@ store_results <- function(mod, model.name, sample.size, sim, res, corr=0){
       if(!is.null(mod$ddf)){
 
         # average p is n/Nhat
-        p <- sample.size/mod$ddf$Nhat
+        p <- summary(mod$ddf)$n/mod$ddf$Nhat
 
         # variance of average p
         varp <- summary(mod$ddf)$average.p.se
@@ -38,12 +39,14 @@ store_results <- function(mod, model.name, sample.size, sim, res, corr=0){
         }
 
         aic <- mod$ddf$criterion
+        n <- summary(mod$ddf)$n
 
       }
     }
   }
   res <- rbind(res,
                c(other.vars, "p", p),
+               c(other.vars, "n", n),
                c(other.vars, "b0", b0),
                c(other.vars, "cov1", cov1),
                c(other.vars, "cov2", cov2),

@@ -26,8 +26,9 @@ formula <- ~cov1
 
 ### BETA distributed covariates
 ### simulation setting 1
-a<-0.45;b<-0.45
-pars <- c(1,-1.2)
+b <- 1.1
+a <- 4
+pars <- c(0.1,-0.2)
 
 ### beta testing
 betamean <- a/(a+b)
@@ -68,12 +69,12 @@ this.data <- make.data(sample.size,width,pars,covdata,formula)
 ##
 #mod1 <- try(ds(this.data,truncation=width,order=0))
 #mod1.cov <- try(ds(this.data,truncation=width,formula=~cov1,order=0))
-#mod12.cov <- try(ds(this.data,truncation=width,formula=~cov1+as.factor(cov2),order=0))
+#mod12.cov <- try(ds(this.data,truncation=width,formula=~cov1+cov2,order=0))
 #par(mfrow=c(1,3))
 #plot(mod1)
 #plot(mod1.cov)
 #plot(mod12.cov)
-##
+#
 #dev.new()
 
 fake.object <- list()
