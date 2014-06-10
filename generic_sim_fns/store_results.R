@@ -24,7 +24,7 @@ store_results <- function(mod, model.name, pop.size, sim, res, corr=0){
       if(!is.null(mod$ddf)){
 
         # average p is n/Nhat
-        p <- summary(mod$ddf)$n/mod$ddf$Nhat
+        p <- summary(mod$ddf)$average.p
 
         # variance of average p
         varp <- summary(mod$ddf)$average.p.se
