@@ -135,7 +135,7 @@ unambig.aic.winner <- function(x){
     return(NA)
   }
 }
-unambig.aicw <- ddply(aicres,.(sim,corr,n),unambig.aic.winner)
+unambig.aicw <- ddply(aicres,.(sim,corr,N),unambig.aic.winner)
 unambig.aicw <- unambig.aicw[!is.na(unambig.aicw$V1),]
 
 uapd <- ggplot(unambig.aicw)
@@ -150,7 +150,7 @@ dev.new()
 pvarresults <- results[results$parameter=="varp",]
 p <- ggplot(pvarresults)
 p <- p + geom_boxplot(aes(x=model,y=value))
-p <- p + facet_wrap(corr~n,scales="free_y",nrow=3)
+p <- p + facet_wrap(corr~N,scales="free_y",nrow=3)
 #p <- p + geom_hline(aes(yintercept=true.p),data=pa.lines)
 #p <- p + coord_cartesian(ylim=c(0.25,1))
 p <- p + ggtitle("variance")

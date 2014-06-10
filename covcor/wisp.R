@@ -75,9 +75,9 @@ for(this.n.pop in n.pops){
 
 
       # fit models
-      mm1 <- ds(dat, truncation=width,adjustment=NULL)
-      mm2 <- ds(dat, truncation=width,formula=~cov1,adjustment=NULL)
-      mm3 <- ds(dat, truncation=width,formula=~cov1+cov2,adjustment=NULL)
+      mm1 <- try(ds(dat, truncation=width,adjustment=NULL))
+      mm2 <- try(dds(dat, truncation=width,formula=~cov1,adjustment=NULL))
+      mm3 <- try(dds(dat, truncation=width,formula=~cov1+cov2,adjustment=NULL))
 
 
       # extract the results
