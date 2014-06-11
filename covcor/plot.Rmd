@@ -1,0 +1,253 @@
+Summarise and plot results of correlated covariate simulations
+==============================================================
+
+This document details the results of the simulations carried out via `wisp.R`.
+
+Two populations (one of size 1000, the other of size 5000), on a square region with 10 transects covering 70% of the study area. The same detection function was used in both cases
+
+
+```{r knitr-setup, include=FALSE}
+knitr::opts_chunk$set(cache=TRUE)
+```
+
+```{r setup}
+options(stingsAsFactors=FALSE)
+library(ggplot2)
+library(plyr)
+```
+
+first load data and set the column titles
+```{r loaddata}
+big.res <- read.csv("covcor-wisp.csv")
+results <- as.data.frame(big.res)
+results <- results[,-1]
+names(results) <- c("sim","N","model","corr","parameter","value")
+```
+
+Each of the sections below takes a subset of the data and investigates properties of the summary statistics recorded during the simulation.
+
+## Sample size
+
+The population sizes were fixed during the two simulation experiments, but the samples sizes were not. So, first let's look at the histograms of sample size:
+
+```{r plot-sampsize}
+sampsize <- results[results$parameter=="n",]
+pss <- ggplot(sampsize)
+pss <- pss + geom_histogram(aes(value))
+pss <- pss + facet_wrap(~N,scales="free")
+print(pss)
+```
+
+Don't need to worry about the correlation in these plots, since this didn't influence the sample size (correlation was not in the data generation process for the distances).
+
+Looks like the sample sizes are pretty stable, median for population size 1000 is `r round(median(sampsize$value[sampsize$N==1000],na.rm=TRUE),1)` and for 5000 it's `r round(median(sampsize$value[sampsize$N==5000],na.rm=TRUE),1)`.
+
+
+## Average $p$
+
+Our primary statistic of interest in distance sampling is the average detectability. GLM theory says that when we have correlated covariates, we should see higher variance, since the likelihood is flatter for certain corresponding values of the two parameters (if two covariates are correlated).
+
+## Bias in average $p$
+
+```{r pbias-setup}
+pbias_f <- function(x){
+  est.p <- x$value[x$parameter=="p"]
+  true.p <- x$value[x$parameter=="n"]/x$N[1]
+
+  pdiff <- true.p-est.p
+  return(pdiff)
+}
+
+pbias <- ddply(results,.(sim,corr,N,model), pbias_f)
+```
+
+```{r plot-pbias, plot=TRUE}
+#avg.p <- 0.45863
+p <- ggplot(pbias)
+p <- p + geom_boxplot(aes(x=model,y=V1))
+p <- p + facet_grid(corr~N)
+p <- p + ylab("(true p) - (estimated p)")
+print(p)
+```
+
+We don't see much bias here between the half-normal model with the "real" covariate (`hn+cov1`) and with the "real" and "fake" covariate (`hn+cov1+cov2`).
+
+But, what about variance issues?
+
+```{r plot-pvariance}
+pvarresults <- results[results$parameter=="varp",]
+p <- ggplot(pvarresults)
+p <- p + geom_boxplot(aes(x=model,y=value))
+p <- p + facet_wrap(corr~N,scales="free_y",nrow=3)
+p <- p + ylab("variance of p")
+print(p)
+```
+
+Not only does the variance increase, the variation in the variance is bigger.
+
+## Parameter estimates
+
+# true b0?
+```{r truebetas}
+pars <- c(-1.540577, 0.0866434)
+```
+
+
+How do estimates of beta_0 change?
+want to compare b_0 estimates between model with cov1 and cov1+cov2
+
+only want the b0 estimates
+```{r b0-box-data}
+b0res <- results[results$parameter=="b0",]
+```
+
+boxplot of b0
+```{r plot-b0-box, plot=TRUE}
+boxb0 <- ggplot(b0res)
+boxb0 <- boxb0 + geom_boxplot(aes(x=model,y=value))
+boxb0 <- boxb0 + facet_wrap(corr~N,scales="free",nrow=3)
+boxb0 <- boxb0 + geom_hline(aes(yintercept=pars[1]),colour="red")
+boxb0 <- boxb0 + ggtitle("b0 estimates")
+print(boxb0)
+```
+
+
+how do coefficient estimates change per sim between models
+only for cov1 and cov1+cov2 models
+```{r plot-b0-change}
+b0res <- b0res[b0res$model%in%c("hn+cov1","hn+cov1+cov2"),]
+pb <- ggplot(b0res)
+pb <- pb + geom_point(aes(x=model,y=value))
+pb <- pb + geom_line(aes(x=model,y=value,group=sim),alpha=0.5)
+pb <- pb + facet_grid(corr~N,scales="free_y")
+pb <- pb + geom_hline(aes(yintercept=pars[1]))
+pb <- pb + ggtitle("b0 estimates")
+print(pb)
+```
+
+
+changes in b0
+
+```{r b0-deltas}
+fdiff <- function(x) diff(x$value)
+
+b0dif <- ddply(b0res,.(sim,corr,N),fdiff)
+
+pd <- ggplot(b0dif)
+pd <- pd + geom_histogram(aes(V1))
+pd <- pd + facet_grid(corr~N)
+pd <- pd + geom_vline(xintercept=0,colour="red")
+print(pd)
+```
+
+what about using the sign test to look at pairwise differences?
+
+```{r b0-test}
+wilcox.ply <- function(x){
+  wilcox.test(x$value[x$model=="hn+cov1"],
+             x$value[x$model=="hn+cov1+cov2"])$p.value
+}
+
+daply(b0res,.(corr,N),wilcox.ply)
+
+```
+
+
+### $\beta_1$
+
+
+only want the cov1 beta estimates
+```{r b1-box-data}
+cov1res <- results[results$parameter=="cov1",]
+cov1res.plotdata <- cov1res[!is.na(cov1res$value),]
+```
+
+ boxplot of b1
+```{r plot-b1-box}
+boxcov1 <- ggplot(cov1res.plotdata)
+boxcov1 <- boxcov1 + geom_boxplot(aes(x=model,y=value))
+boxcov1 <- boxcov1 + facet_wrap(corr~N,scales="free",nrow=3)
+boxcov1 <- boxcov1 + geom_hline(aes(yintercept=pars[2]),colour="red")
+boxcov1 <- boxcov1 + ggtitle("cov1 estimates")
+print(boxcov1)
+```
+
+only for cov1 and cov1+cov2 models
+
+```{r plot-b1-changes}
+cov1res <- cov1res[cov1res$model%in%c("hn+cov1","hn+cov1+cov2"),]
+
+pb <- ggplot(cov1res)
+pb <- pb + geom_point(aes(x=model,y=value))
+pb <- pb + geom_line(aes(x=model,y=value,group=sim),alpha=0.5)
+pb <- pb + facet_grid(corr~N,scales="free_y")
+pb <- pb + geom_hline(aes(yintercept=pars[2]),colour="red")
+pb <- pb + ggtitle("cov1 estimates")
+print(pb)
+```
+
+```{r plot-b1-deltas}
+cov1dif <- ddply(cov1res,.(sim,corr,N),fdiff)
+
+pd <- ggplot(cov1dif)
+pd <- pd + geom_histogram(aes(V1),binwidth=0.01)
+pd <- pd + facet_grid(corr~N,scales="free")
+pd <- pd + geom_vline(xintercept=0,colour="red")
+print(pd)
+```
+
+```{r b1-test}
+daply(cov1res,.(corr,N),wilcox.ply)
+```
+
+
+## AIC winners
+
+ which was the winner?
+
+```{r plot-aic-winners}
+aicres <- results[results$parameter=="aic",]
+
+aic.winner <- function(x){
+  if(!all(is.na(x$value))){
+    return(as.character(x$model[which.min(x$value)]))
+  }else{
+    return(NA)
+  }
+}
+
+aicw <- ddply(aicres,.(sim,corr,N),aic.winner)
+
+pd <- ggplot(aicw)
+pd <- pd + geom_histogram(aes(V1))#,binwidth=0.01)
+pd <- pd + facet_grid(corr~N,scales="free")
+pd <- pd + ggtitle("AIC winners")
+print(pd)
+```
+
+how many AIC winners were better by more than 3 points than BOTH
+models -- i.e. unambiguous winner
+```{r plot-unambiguous-aic-winners}
+unambig.aic.winner <- function(x){
+  this.winner <- which.min(x$value)
+  vals <- x$value[-this.winner]-x$value[this.winner]
+  #return(all(vals > 3))
+  if(any(is.na(vals))){
+    return(NA)
+  }else if(all(vals > 3)){
+    return(as.character(x$model[which.min(x$value)]))
+  }else{
+    return(NA)
+  }
+}
+unambig.aicw <- ddply(aicres,.(sim,corr,N),unambig.aic.winner)
+unambig.aicw <- unambig.aicw[!is.na(unambig.aicw$V1),]
+
+uapd <- ggplot(unambig.aicw)
+uapd <- uapd + geom_histogram(aes(V1))#,binwidth=0.01)
+uapd <- uapd + facet_grid(corr~N)
+uapd <- uapd + ggtitle("unambiguous AIC winners")
+print(uapd)
+```
+
+
