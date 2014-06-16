@@ -74,18 +74,21 @@ for(this.n.pop in n.pops){
                         cov1     = mysamp$population$exposure[samp.ind])
 
       dat$cov2 <- corr*dat$cov1 + scaling*sqrt(1-corr^2)*rnorm(nrow(dat),betamean,sqrt(betavar))
+      dat$cov3 <- corr*dat$cov1 + scaling*sqrt(1-corr^2)*rnorm(nrow(dat),betamean,sqrt(betavar))
 
 
       # fit models
       mm1 <- try(ds(dat, truncation=width,adjustment=NULL))
       mm2 <- try(ds(dat, truncation=width,formula=~cov1,adjustment=NULL))
       mm3 <- try(ds(dat, truncation=width,formula=~cov1+cov2,adjustment=NULL))
+      mm5 <- try(ds(dat, truncation=width,formula=~cov1+cov2+cov3,adjustment=NULL))
 
 
       # extract the results
       res <- store_results(mm1, "hn", this.n.pop, sim, res, corr=corr)
       res <- store_results(mm2, "hn+cov1", this.n.pop, sim, res, corr=corr)
       res <- store_results(mm3, "hn+cov1+cov2", this.n.pop, sim, res,corr=corr)
+      res <- store_results(mm5, "hn+cov1+cov2+cov3", this.n.pop, sim, res,corr=corr)
 
       return(res)
 
