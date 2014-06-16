@@ -16,7 +16,7 @@ t.seed <- NULL
 
 ## options
 # number of simulations to do per sample size
-n.sims <- 200
+n.sims <- 500
 # correlations
 corrs <- c(0.7,0.8,0.9)
 # formula used to *generate* the data
