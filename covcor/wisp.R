@@ -38,16 +38,21 @@ for(this.n.pop in n.pops){
   # population
   mypop.pars <- setpars.population(mydens, number.groups=this.n.pop,
                                    size.method="user", size.prob=1, size.values=1,
-                                   exposure.method="beta", exposure.min=2,
-                                   exposure.max=10, exposure.mean=6,
-                                   exposure.shape=1)
+                                   # first 2 sims
+                                   #exposure.method="beta", exposure.min=2,
+                                   #exposure.max=10, exposure.mean=6,
+                                   exposure.method="beta", exposure.min=0,
+                                   exposure.max=11, exposure.mean=3,
+                                   exposure.shape=1.1)
   mypop <- generate.population(mypop.pars, seed=t.seed)
   # set up the design
   mydes.pars <- setpars.design.lt(myreg, n.transects=10, n.units=10, visual.range=3.5)
   mydes <- generate.design.lt(mydes.pars, seed=t.seed)
 
 # first sim was 0.1, 0.6
-  mysurvey.pars <- setpars.survey.lt(mypop, mydes, disthalf.min=0.1,
+# second sim was 0.1, 1.2
+# second sim was 0.7, 1.2
+  mysurvey.pars <- setpars.survey.lt(mypop, mydes, disthalf.min=0.7,
                                      disthalf.max=1.2, model = "half.normal")
 
   # exposure parameters, used below to generate correlated data
@@ -100,6 +105,6 @@ for(this.n.pop in n.pops){
 
 } # end loop over population sizes
 
-write.csv(big.res, file="covcor-wisp-0.1-1.2.csv")
+write.csv(big.res, file="covcor-wisp-0.7-1.2.csv")
 
 
