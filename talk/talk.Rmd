@@ -1,0 +1,49 @@
+% Strategies for correlated covariates in distance sampling
+% David Lawrence Miller
+% ISEC 2014
+
+# Correlated covariates in distance sampling
+
+
+## Detection functions
+
+- Models of the form:
+    $g(x;\theta,z) = \mathbf{P}(\text{detected}| \text{observed } x, z)$
+  - distances $x$
+  - estimate parameters $\theta$
+  - covariates $z$, that affect detection
+- What about correlations in the $z$s?
+
+
+
+## What are the covariates we usually collect?
+
+- Terrestrial: foliage cover
+- Marine: Beaufort sea state 
+- Both: weather, observer, time
+
+
+## What can go wrong?
+
+
+
+## Some ideas from regression
+
+- Ridge regression
+- VIF
+- PCA/PCO
+
+
+## Simulation
+
+
+## Should we always do this?
+
+
+
+## Real data
+
+
+
+## Conclusions
+

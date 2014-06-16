@@ -85,6 +85,32 @@ print(p)
 
 Not only does the variance increase, the variation in the variance is bigger.
 
+```{r plot-pvariance-lines}
+pl <- ggplot(pvarresults)
+pl <- pl + geom_line(aes(x=model,y=value,group=sim),alpha=0.3)
+pl <- pl + facet_wrap(corr~N,scales="free_y",nrow=3)
+pl <- pl + ylab("variance of p")
+print(pl)
+```
+
+Is the variance bigger all the time from cov1 to cov1+cov2?
+
+```{r bigger-variance}
+var12 <- pvarresults[pvarresults$model %in% c("hn+cov1","hn+cov1+cov2"),]
+diffp <-ddply(var12,.(corr,N,sim),function(x){
+                        sign(x$value[x$model=="hn+cov1+cov2"]-
+                             x$value[x$model=="hn+cov1"])}) 
+```
+
+```{r plot-bigger-variance}
+pbv <- ggplot(diffp)
+pbv <- pbv + geom_bar(aes(x=V1))
+pbv <- pbv + facet_wrap(corr~N,scales="free_y",nrow=3)
+pbv <- pbv + ylab("variance of p")
+print(pbv)
+```
+
+
 ## Parameter estimates
 
 # true b0?
