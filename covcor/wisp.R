@@ -106,6 +106,6 @@ Ncov <- sum(!is.na(mysamp$detected))
 
 } # end loop over population sizes
 
-write.csv(big.res, file="covcor-wisp-0.7-1.2.csv")
+write.csv(big.res, file="covcor-wisp-smallp.csv")
 
 
