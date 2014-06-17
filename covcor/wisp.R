@@ -18,11 +18,11 @@ t.seed <- NULL
 # number of simulations to do per sample size
 n.sims <- 500
 # correlations
-corrs <- c(0.7,0.8,0.9)
+corrs <- c(0.7,0.8,0.9,0.95,0.99)
 # formula used to *generate* the data
 formula <- ~cov1
 # truncation
-width <- 0.9
+width <- 1
 # population sizes
 n.pops <- c(1000,5000)
 
@@ -38,22 +38,20 @@ for(this.n.pop in n.pops){
   # population
   mypop.pars <- setpars.population(mydens, number.groups=this.n.pop,
                                    size.method="user", size.prob=1, size.values=1,
-                                   # first 2 sims
-                                   #exposure.method="beta", exposure.min=2,
-                                   #exposure.max=10, exposure.mean=6,
                                    exposure.method="beta", exposure.min=0,
-                                   exposure.max=11, exposure.mean=3,
-                                   exposure.shape=1.1)
+                                   exposure.max=10, exposure.mean=2,
+                                   exposure.shape=2)
   mypop <- generate.population(mypop.pars, seed=t.seed)
   # set up the design
-  mydes.pars <- setpars.design.lt(myreg, n.transects=10, n.units=10, visual.range=3.5)
+  mydes.pars <- setpars.design.lt(myreg, n.transects=20, n.units=20,
+                                  visual.range=1.1)
   mydes <- generate.design.lt(mydes.pars, seed=t.seed)
 
 # first sim was 0.1, 0.6
 # second sim was 0.1, 1.2
 # second sim was 0.7, 1.2
-  mysurvey.pars <- setpars.survey.lt(mypop, mydes, disthalf.min=0.7,
-                                     disthalf.max=1.2, model = "half.normal")
+  mysurvey.pars <- setpars.survey.lt(mypop, mydes, disthalf.min=0.15,
+                                     disthalf.max=0.8, model = "half.normal")
 
   # exposure parameters, used below to generate correlated data
   a <- mypop.pars$exposure.alpha
