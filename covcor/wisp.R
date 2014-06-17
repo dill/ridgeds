@@ -88,12 +88,13 @@ for(this.n.pop in n.pops){
       mm3 <- try(ds(dat, truncation=width,formula=~cov1+cov2,adjustment=NULL))
       mm5 <- try(ds(dat, truncation=width,formula=~cov1+cov2+cov3,adjustment=NULL))
 
+Ncov <- sum(!is.na(mysamp$detected))
 
       # extract the results
-      res <- store_results(mm1, "hn", this.n.pop, sim, res, corr=corr)
-      res <- store_results(mm2, "hn+cov1", this.n.pop, sim, res, corr=corr)
-      res <- store_results(mm3, "hn+cov1+cov2", this.n.pop, sim, res,corr=corr)
-      res <- store_results(mm5, "hn+cov1+cov2+cov3", this.n.pop, sim, res,corr=corr)
+      res <- store_results(mm1, "hn", this.n.pop, sim, res, corr=corr, Ncov)
+      res <- store_results(mm2, "hn+cov1", this.n.pop, sim, res, corr=corr, Ncov)
+      res <- store_results(mm3, "hn+cov1+cov2", this.n.pop, sim, res,corr=corr, Ncov)
+      res <- store_results(mm5, "hn+cov1+cov2+cov3", this.n.pop, sim, res,corr=corr, Ncov)
 
       return(res)
 
