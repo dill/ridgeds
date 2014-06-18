@@ -1,41 +1,67 @@
 % Strategies for correlated covariates in distance sampling
 % David Lawrence Miller
-% ISEC 2014
+% CREEM, University of St Andrews
 
 # Correlated covariates in distance sampling
 
 
 ## Detection functions
 
-- Models of the form:
-    $g(x;\theta,z) = \mathbf{P}(\text{detected}| \text{observed } x, z)$
-  - distances $x$
-  - estimate parameters $\theta$
-  - covariates $z$, that affect detection
-- What about correlations in the $z$s?
+  - Models of the form: $g(x;\theta,z) = \mathbf{P}(\text{detected}| \text{observed } x, z)$
+      - distances $x$
+      - estimate parameters $\theta$
+      - covariates $z$, that affect detection
+  - covariates enter model via: $\sigma(\mathbf{z}) = \exp(\beta_0 + \sum_j z_j \beta_j)$
+  - What about correlations in the $z$s?
 
 
 
 ## What are the covariates we usually collect?
 
-- Terrestrial: foliage cover
-- Marine: Beaufort sea state 
-- Both: weather, observer, time
+  - Terrestrial: foliage cover
+  - Marine: Beaufort sea state 
+  - Both: weather, observer, time
 
 
 ## What can go wrong?
 
+  - from linear model literature:
+    * prediction fine
+    * high variance
+    * non-interpretable covariates
+  - in DS:
+    * fitted values ($p_i(\mathbf{z})$) important
+    * variance important
+    * covariates are nuisance 
 
+## Aside: what causes high variance?
+
+  * Just going to talk about $\hat{N_c}$
+  * $\text{var}(\hat{N_c}) = w^2 \sum_i \hat{f}(0|\mathbf{z})^2 - \hat{N_c} + \left[\frac{\partial N_c}{\partial \theta}\right]^\text{T} H^{-1} \left[\frac{\partial N_c}{\partial \theta}\right]$
+  $\text{var}(\hat{N_c}) = \sum_i \left[\left(\frac{1}{\hat{p_i}}\right)^2 - \frac{1}{\hat{p_i}}\right] + \left[\frac{\partial N_c}{\partial \theta}\right]^\text{T} H^{-1} \left[\frac{\partial N_c}{\partial \theta}\right]$
 
 ## Some ideas from regression
 
 - Ridge regression
-- VIF
+- Lasso
 - PCA/PCO
 
+Shrinkage methods require estimate shrinkage!
 
 ## Simulation
 
+  - questions:
+    * When does this matter?
+    * What can we do?
+  - restricted scope
+    * 2-3 covariates usual -- plotable
+    * usually no "junk" covariates
+
+## Simple solutions
+
+  - Principle components
+    * interpretation not so important
+    * fast, simple
 
 ## Should we always do this?
 

@@ -79,12 +79,28 @@ for(this.n.pop in n.pops){
       dat$cov2 <- corr*dat$cov1 + scaling*sqrt(1-corr^2)*rnorm(nrow(dat),betamean,sqrt(betavar))
       dat$cov3 <- corr*dat$cov1 + scaling*sqrt(1-corr^2)*rnorm(nrow(dat),betamean,sqrt(betavar))
 
+# normalise the covariates
+dat[,2:4] <- (dat[,2:4]-colMeans(dat[,2:4]))/apply(dat[,2:4],2,sd)
 
       # fit models
       mm1 <- try(ds(dat, truncation=width,adjustment=NULL))
       mm2 <- try(ds(dat, truncation=width,formula=~cov1,adjustment=NULL))
       mm3 <- try(ds(dat, truncation=width,formula=~cov1+cov2,adjustment=NULL))
       mm5 <- try(ds(dat, truncation=width,formula=~cov1+cov2+cov3,adjustment=NULL))
+
+# now do some PCA
+dat2 <- as.matrix(dat[,2:4])
+pc <- eigen((t(dat2)%*%dat2))
+pc.dat <- dat2%*%pc$vectors
+pc.dat <- as.data.frame(pc.dat)
+names(pc.dat) <- c("cov1","cov2","cov3")
+pc.dat$distance <- dat$distance
+
+# fit PCA models
+mm2.pc <- try(ds(pc.dat, truncation=width,formula=~cov1,adjustment=NULL))
+mm3.pc <- try(ds(pc.dat, truncation=width,formula=~cov1+cov2,adjustment=NULL))
+mm5.pc <- try(ds(pc.dat, truncation=width,formula=~cov1+cov2+cov3,adjustment=NULL))
+
 
 Ncov <- sum(!is.na(mysamp$detected))
 
@@ -93,6 +109,13 @@ Ncov <- sum(!is.na(mysamp$detected))
       res <- store_results(mm2, "hn+cov1", this.n.pop, sim, res, corr=corr, Ncov)
       res <- store_results(mm3, "hn+cov1+cov2", this.n.pop, sim, res,corr=corr, Ncov)
       res <- store_results(mm5, "hn+cov1+cov2+cov3", this.n.pop, sim, res,corr=corr, Ncov)
+
+# save pca results
+      res <- store_results(mm2.pc, "PCAhn+cov1", this.n.pop, sim, res, corr=corr, Ncov)
+      res <- store_results(mm3.pc, "PCAhn+cov1+cov2", this.n.pop, sim, res,corr=corr, Ncov)
+      res <- store_results(mm5.pc, "PCAhn+cov1+cov2+cov3", this.n.pop, sim, res,corr=corr, Ncov)
+
+
 
       return(res)
 
@@ -104,6 +127,6 @@ Ncov <- sum(!is.na(mysamp$detected))
 
 } # end loop over population sizes
 
-write.csv(big.res, file="covcor-wisp-smallp.csv")
+write.csv(big.res, file="covcor-wisp-smallp-PCA.csv")
 
 
