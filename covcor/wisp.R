@@ -111,17 +111,15 @@ dat[,2:4] <- (dat[,2:4]-colMeans(dat[,2:4]))/apply(dat[,2:4],2,sd)
       Ncov <- sum(!is.na(mysamp$detected))
 
       # extract the results
-      #res <- store_results(mm1, "hn", this.n.pop, sim, res, corr=corr, Ncov)
-      #res <- store_results(mm2, "hn+cov1", this.n.pop, sim, res, corr=corr, Ncov)
-      #res <- store_results(mm3, "hn+cov1+cov2", this.n.pop, sim, res,corr=corr, Ncov)
-      #res <- store_results(mm5, "hn+cov1+cov2+cov3", this.n.pop, sim, res,corr=corr, Ncov)
+      mm[[1]]$model.name <- "hn"
+      mm[[2]]$model.name <- "hn+cov1"
+      mm[[3]]$model.name <- "hn+cov1+cov2"
+      mm[[4]]$model.name <- "hn+cov1+cov2+cov3"
+      mm[[5]]$model.name <- "PCAhn+cov1"
+      mm[[6]]$model.name <- "PCAhn+cov1+cov2"
+      mm[[7]]$model.name <- "PCAhn+cov1+cov2+cov3"
 
-# save# pca results
-      #res <- store_results(mm2.pc, "PCAhn+cov1", this.n.pop, sim, res, corr=corr, Ncov)
-      #res <- store_results(mm3.pc, "PCAhn+cov1+cov2", this.n.pop, sim, res,corr=corr, Ncov)
-      #res <- store_results(mm5.pc, "PCAhn+cov1+cov2+cov3", this.n.pop, sim, res,corr=corr, Ncov)
-
-      rres <- lapply(mm,store_results,"hn", this.n.pop, sim, corr=corr,Ncov)
+      rres <- lapply(mm,store_results, this.n.pop, sim, corr=corr,Ncov)
       res<-c()
       for(l in rres){
         res<-rbind(res,l)

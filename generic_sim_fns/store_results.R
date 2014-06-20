@@ -1,5 +1,5 @@
 # shortcut function to store results
-store_results <- function(mod, model.name, pop.size, sim, corr=0, Ncov){
+store_results <- function(mod, pop.size, sim, corr=0, Ncov){
   # mod         - fitted model object (call was wrapped in a try())
   # model.name  - string to identify model
   # pop.size    - population size
@@ -15,7 +15,7 @@ store_results <- function(mod, model.name, pop.size, sim, corr=0, Ncov){
   n <- NA
 
   # other variables
-  other.vars <- c(sim, pop.size, model.name, corr,Ncov)
+  other.vars <- c(sim, pop.size, mod$model.name, corr,Ncov)
 
   # if fitting went okay, then store some values
   if(!is.null(mod)){

@@ -2,8 +2,6 @@
 % David Lawrence Miller
 % CREEM, University of St Andrews
 
-# Correlated covariates in distance sampling
-
 
 ## Detection functions
 
@@ -12,8 +10,7 @@
       - estimate parameters $\theta$
       - covariates $z$, that affect detection
   - covariates enter model via: $\sigma(\mathbf{z}) = \exp(\beta_0 + \sum_j z_j \beta_j)$
-  - What about correlations in the $z$s?
-
+  - fixed functional form $||\theta||<5$ most of the time
 
 
 ## What are the covariates we usually collect?
@@ -22,6 +19,9 @@
   - Marine: Beaufort sea state 
   - Both: weather, observer, time
 
+\includegraphics[width=\textwidth]{fancybirds.png}
+
+(Marques et al 2007)
 
 ## What can go wrong?
 
