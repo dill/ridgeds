@@ -1,10 +1,9 @@
 # shortcut function to store results
-store_results <- function(mod, model.name, pop.size, sim, res, corr=0, Ncov){
+store_results <- function(mod, model.name, pop.size, sim, corr=0, Ncov){
   # mod         - fitted model object (call was wrapped in a try())
   # model.name  - string to identify model
   # pop.size    - population size
   # sim         - simulation id
-  # results     - data.frame to append to
 
   # dummy
   p <- NA
@@ -44,7 +43,7 @@ store_results <- function(mod, model.name, pop.size, sim, res, corr=0, Ncov){
       }
     }
   }
-  res <- rbind(res,
+  res <- rbind(
                c(other.vars, "p", p),
                c(other.vars, "n", n),
                c(other.vars, "b0", b0),

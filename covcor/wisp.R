@@ -2,6 +2,7 @@ library(wisp)
 library(Distance)
 library(doMC)
 library(foreach)
+library(plyr)
 
 options(cores=8)
 registerDoMC()
@@ -16,9 +17,9 @@ t.seed <- NULL
 
 ## options
 # number of simulations to do per sample size
-n.sims <- 500
+n.sims <- 400
 # correlations
-corrs <- c(0.7,0.8,0.9,0.95,0.99)
+corrs <- c(0.8,0.9,0.95)
 # formula used to *generate* the data
 formula <- ~cov1
 # truncation
@@ -47,9 +48,6 @@ for(this.n.pop in n.pops){
                                   visual.range=1.1)
   mydes <- generate.design.lt(mydes.pars, seed=t.seed)
 
-# first sim was 0.1, 0.6
-# second sim was 0.1, 1.2
-# second sim was 0.7, 1.2
   mysurvey.pars <- setpars.survey.lt(mypop, mydes, disthalf.min=0.15,
                                      disthalf.max=0.8, model = "half.normal")
 
@@ -63,6 +61,12 @@ for(this.n.pop in n.pops){
   # loop over correlations
   for(corr in corrs){
 
+    cov1 <- mypop$exposure
+    cov2 <- corr*cov1 + scaling*sqrt(1-corr^2)*rnorm(this.n.pop,
+                                                     betamean,sqrt(betavar))
+    cov3 <- corr*cov1 + scaling*sqrt(1-corr^2)*rnorm(this.n.pop,
+                                                     betamean,sqrt(betavar))
+
     ## simulation
     results <- foreach(sim = 1:n.sims, .combine=rbind,
                        .inorder=FALSE, .init=c()) %dopar% {
@@ -74,47 +78,54 @@ for(this.n.pop in n.pops){
       mysamp <- generate.sample.lt(mysurvey.pars, seed=t.seed)
       samp.ind <- mysamp$detected==1 & !is.na(mysamp$detected)
       dat <- data.frame(distance = mysamp$distance[samp.ind],
-                        cov1     = mysamp$population$exposure[samp.ind])
+                        cov1     = mysamp$population$exposure[samp.ind],
+                        cov2     = cov2[samp.ind],
+                        cov3     = cov3[samp.ind])
 
-      dat$cov2 <- corr*dat$cov1 + scaling*sqrt(1-corr^2)*rnorm(nrow(dat),betamean,sqrt(betavar))
-      dat$cov3 <- corr*dat$cov1 + scaling*sqrt(1-corr^2)*rnorm(nrow(dat),betamean,sqrt(betavar))
+#      dat$cov2 <- corr*dat$cov1 + scaling*sqrt(1-corr^2)*rnorm(nrow(dat),betamean,sqrt(betavar))
+#      dat$cov3 <- corr*dat$cov1 + scaling*sqrt(1-corr^2)*rnorm(nrow(dat),betamean,sqrt(betavar))
 
 # normalise the covariates
 dat[,2:4] <- (dat[,2:4]-colMeans(dat[,2:4]))/apply(dat[,2:4],2,sd)
 
       # fit models
-      mm1 <- try(ds(dat, truncation=width,adjustment=NULL))
-      mm2 <- try(ds(dat, truncation=width,formula=~cov1,adjustment=NULL))
-      mm3 <- try(ds(dat, truncation=width,formula=~cov1+cov2,adjustment=NULL))
-      mm5 <- try(ds(dat, truncation=width,formula=~cov1+cov2+cov3,adjustment=NULL))
+      mm <- list()
+      mm[[1]] <- try(ds(dat, truncation=width,adjustment=NULL))
+      mm[[2]] <- try(ds(dat, truncation=width,formula=~cov1,adjustment=NULL))
+      mm[[3]] <- try(ds(dat, truncation=width,formula=~cov1+cov2,adjustment=NULL))
+      mm[[4]] <- try(ds(dat, truncation=width,formula=~cov1+cov2+cov3,adjustment=NULL))
 
-# now do some PCA
-dat2 <- as.matrix(dat[,2:4])
-pc <- eigen((t(dat2)%*%dat2))
-pc.dat <- dat2%*%pc$vectors
-pc.dat <- as.data.frame(pc.dat)
-names(pc.dat) <- c("cov1","cov2","cov3")
-pc.dat$distance <- dat$distance
+      # now do some PCA
+      dat2 <- as.matrix(dat[,2:4])
+      pc <- eigen((t(dat2)%*%dat2))
+      pc.dat <- dat2%*%pc$vectors
+      pc.dat <- as.data.frame(pc.dat)
+      names(pc.dat) <- c("cov1","cov2","cov3")
+      pc.dat$distance <- dat$distance
 
-# fit PCA models
-mm2.pc <- try(ds(pc.dat, truncation=width,formula=~cov1,adjustment=NULL))
-mm3.pc <- try(ds(pc.dat, truncation=width,formula=~cov1+cov2,adjustment=NULL))
-mm5.pc <- try(ds(pc.dat, truncation=width,formula=~cov1+cov2+cov3,adjustment=NULL))
+      # fit PCA models
+      mm[[5]] <- try(ds(pc.dat, truncation=width,formula=~cov1,adjustment=NULL))
+      mm[[6]] <- try(ds(pc.dat, truncation=width,formula=~cov1+cov2,adjustment=NULL))
+      mm[[7]] <- try(ds(pc.dat, truncation=width,formula=~cov1+cov2+cov3,adjustment=NULL))
 
-
-Ncov <- sum(!is.na(mysamp$detected))
+      Ncov <- sum(!is.na(mysamp$detected))
 
       # extract the results
-      res <- store_results(mm1, "hn", this.n.pop, sim, res, corr=corr, Ncov)
-      res <- store_results(mm2, "hn+cov1", this.n.pop, sim, res, corr=corr, Ncov)
-      res <- store_results(mm3, "hn+cov1+cov2", this.n.pop, sim, res,corr=corr, Ncov)
-      res <- store_results(mm5, "hn+cov1+cov2+cov3", this.n.pop, sim, res,corr=corr, Ncov)
+      #res <- store_results(mm1, "hn", this.n.pop, sim, res, corr=corr, Ncov)
+      #res <- store_results(mm2, "hn+cov1", this.n.pop, sim, res, corr=corr, Ncov)
+      #res <- store_results(mm3, "hn+cov1+cov2", this.n.pop, sim, res,corr=corr, Ncov)
+      #res <- store_results(mm5, "hn+cov1+cov2+cov3", this.n.pop, sim, res,corr=corr, Ncov)
 
-# save pca results
-      res <- store_results(mm2.pc, "PCAhn+cov1", this.n.pop, sim, res, corr=corr, Ncov)
-      res <- store_results(mm3.pc, "PCAhn+cov1+cov2", this.n.pop, sim, res,corr=corr, Ncov)
-      res <- store_results(mm5.pc, "PCAhn+cov1+cov2+cov3", this.n.pop, sim, res,corr=corr, Ncov)
+# save# pca results
+      #res <- store_results(mm2.pc, "PCAhn+cov1", this.n.pop, sim, res, corr=corr, Ncov)
+      #res <- store_results(mm3.pc, "PCAhn+cov1+cov2", this.n.pop, sim, res,corr=corr, Ncov)
+      #res <- store_results(mm5.pc, "PCAhn+cov1+cov2+cov3", this.n.pop, sim, res,corr=corr, Ncov)
 
+      rres <- lapply(mm,store_results,"hn", this.n.pop, sim, corr=corr,Ncov)
+      res<-c()
+      for(l in rres){
+        res<-rbind(res,l)
+      }
 
 
       return(res)
