@@ -3,73 +3,184 @@
 % CREEM, University of St Andrews
 
 
+
+```{r knitr-setup, include=FALSE}
+knitr::opts_chunk$set(cache=TRUE)
+```
+
+## Covariates in distance sampling
+
+  - CDS: $\mathbb{P}(\text{observing an object})$ depends on distance
+  - MCDS: what about other factors?
+    - per animal (sex, size,...)
+    - environmental effects (weather, time of day, habitat,...)
+    - observer effects (individual, team, pilot,...)
+    - (group size -- not addressed here)
+
+\includegraphics[width=\textwidth]{ants-nesthab-2.png}
+
+
 ## Detection functions
 
-  - Models of the form: $g(x;\theta,z) = \mathbf{P}(\text{detected}| \text{observed } x, z)$
-      - distances $x$
-      - estimate parameters $\theta$
-      - covariates $z$, that affect detection
-  - covariates enter model via: $\sigma(\mathbf{z}) = \exp(\beta_0 + \sum_j z_j \beta_j)$
-  - fixed functional form $||\theta||<5$ most of the time
+  - Models of the form
 
+$$
+g(x;\theta,z) = \mathbb{P}(\text{detected}| \text{observed } x, z_1, \ldots, z_J)
+$$
 
-## What are the covariates we usually collect?
+  - distances $x$
+  - estimate parameters $\theta$
+  - covariates $z$, that affect detection
+  - covariates enter model via scale parameter:
 
-  - Terrestrial: foliage cover
-  - Marine: Beaufort sea state 
-  - Both: weather, observer, time
+$$
+\sigma(z_1, \ldots, z_J) = \exp(\beta_0 + \sum_j z_j \beta_j)
+$$
 
-\includegraphics[width=\textwidth]{fancybirds.png}
+## Constraints and particulars
 
-(Marques et al 2007)
+  - $g$ has fixed functional form
+  - usually <5 covariates 
+  - covariates independent from distance (in population)
+  - inference on likelihood *conditional* on observed covars
+
+\includegraphics[width=\textwidth]{some-dfs.png}
 
 ## What can go wrong?
 
   - from linear model literature:
+    * fitting problems
     * prediction fine
-    * high variance
+    * high(er) variance
     * non-interpretable covariates
-  - in DS:
-    * fitted values ($p_i(\mathbf{z})$) important
+  - important for DS:
+    * fitted values ($\hat{p_i}(\mathbf{z}_j)$) important
+    * rarely "predict"
     * variance important
-    * covariates are nuisance 
+    * covariates are nuisance
+
+
+## Example
+
+\begin{columns}[T] % align columns
+\begin{column}{.52\textwidth}
+\begin{itemize}
+  \item half-normal detection function
+  \item 1 "real" covariate beta(0.1,0.4)
+  \item 2 correlated covariates
+  \item select number of terms by AIC
+\end{itemize}
+\end{column}%
+\hfill%
+\begin{column}{.46\textwidth}
+\includegraphics[width=\textwidth]{sim-df.png}
+\end{column}%
+\end{columns}
+
+
+## Example - CV($p$) 
+
+```{r setup, include=FALSE}
+options(stingsAsFactors=FALSE)
+library(ggplot2)
+library(plyr)
+big.res <- read.csv("../covcor/covcor-wisp-smallp-PCA.csv")
+results <- as.data.frame(big.res)
+results <- results[,-1]
+names(results) <- c("sim","N","model","corr","Ncovered","parameter","value")
+# remove the half-normal only model
+results <- subset(results, model!="hn")
+# simplify the model labels
+results$model <- sub("hn\\+","",results$model)
+results$model <- gsub("cov","",results$model)
+results$model <- sub("PCA","PCA ",results$model)
+# remove the PCA 1+2+3 model, as it's equivalent to 1+2+3
+results <- subset(results, model!="PCA 1+2+3")
+```
+
+```{r plotnopca, include=FALSE, fig.width=4.5, fig.height=3, fig.cap="",dpi=120}
+results.noPCA <- results[!grepl("PCA",results$model),]
+results.noPCA <- results.noPCA[results.noPCA$N==1000,]
+
+
+make_cvp <- function(x){
+  sqrt(x$value[x$parameter=="varp"])/x$value[x$parameter=="p"]
+}
+cvp <- ddply(results.noPCA,.(corr,N,sim,model),make_cvp)
+pcv <- ggplot(cvp)
+pcv <- pcv + geom_boxplot(aes(x=model,y=V1))
+pcv <- pcv + facet_wrap(~corr,ncol=4)
+pcv <- pcv + ylab("cv(phat)")
+print(pcv)
+```
+
+\includegraphics[width=\textwidth]{figure/plotnopca.png}
+
+
+## Stealing ideas from regression
+
+  - Obvious possibilities:
+    * Ridge regression
+    * Lasso
+    * PCA
+  - Shrinkage methods require estimate shrinkage!
+    * change in fitting procedure
+
+
+## Simple solutions
+
+  - Principle components
+    * fast, simple, most people know about it
+    * "derived" covariates -- no change in fitting procedure
+  - take $\mathcal{Z}^\text{T}\mathcal{Z} = U^\text{T}\Lambda U$
+  - new covariates $z_j^* = \mathcal{Z}\mathbf{u}_j$
+  - *only* covariates, **not** distance
+
+
+## Simulation revisit
+
+```{r plotpca, include=FALSE, fig.width=7, fig.height=4, fig.cap="",dpi=120,plot=TRUE}
+results.PCA <- results[results$N==1000,]
+results.PCA$model  <- sub("PCA","PCA\n",results.PCA$model)
+
+cvp <- ddply(results.PCA,.(corr,N,sim,model),make_cvp)
+pcv <- ggplot(cvp)
+pcv <- pcv + geom_boxplot(aes(x=model,y=V1))
+pcv <- pcv + facet_wrap(~corr,ncol=4)
+pcv <- pcv + ylab("cv(phat)")
+print(pcv)
+```
+
+\includegraphics[width=\textwidth]{figure/plotpca.png}
+
+
+## A simple example
+
+  * Black bear data from Alaska
+  * 301 observations from Piper Super Cub
+  * heavily left truncated (for this analysis)
+  * 3 covariates:
+    - eff2trans
+    - pctcover
+    - pctsnow
+
+
+## Further work
+
+  * what about other situations?
+  * is it ever "bad" to do this?
+  * hazard-rate, etc. detection functions
+  * factor covariates
+
+
+## Conclusions
+
+
+
 
 ## Aside: what causes high variance?
 
   * Just going to talk about $\hat{N_c}$
   * $\text{var}(\hat{N_c}) = w^2 \sum_i \hat{f}(0|\mathbf{z})^2 - \hat{N_c} + \left[\frac{\partial N_c}{\partial \theta}\right]^\text{T} H^{-1} \left[\frac{\partial N_c}{\partial \theta}\right]$
   $\text{var}(\hat{N_c}) = \sum_i \left[\left(\frac{1}{\hat{p_i}}\right)^2 - \frac{1}{\hat{p_i}}\right] + \left[\frac{\partial N_c}{\partial \theta}\right]^\text{T} H^{-1} \left[\frac{\partial N_c}{\partial \theta}\right]$
-
-## Some ideas from regression
-
-- Ridge regression
-- Lasso
-- PCA/PCO
-
-Shrinkage methods require estimate shrinkage!
-
-## Simulation
-
-  - questions:
-    * When does this matter?
-    * What can we do?
-  - restricted scope
-    * 2-3 covariates usual -- plotable
-    * usually no "junk" covariates
-
-## Simple solutions
-
-  - Principle components
-    * interpretation not so important
-    * fast, simple
-
-## Should we always do this?
-
-
-
-## Real data
-
-
-
-## Conclusions
 

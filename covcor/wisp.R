@@ -86,7 +86,8 @@ for(this.n.pop in n.pops){
 #      dat$cov3 <- corr*dat$cov1 + scaling*sqrt(1-corr^2)*rnorm(nrow(dat),betamean,sqrt(betavar))
 
 # normalise the covariates
-dat[,2:4] <- (dat[,2:4]-colMeans(dat[,2:4]))/apply(dat[,2:4],2,sd)
+#dat[,2:4] <- (dat[,2:4]-colMeans(dat[,2:4]))/apply(dat[,2:4],2,sd)
+dat[,2:4] <- scale(dat[,2:4])
 
       # fit models
       mm <- list()
