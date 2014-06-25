@@ -66,9 +66,10 @@ $$
 \begin{column}{.52\textwidth}
 \begin{itemize}
   \item half-normal detection function
-  \item 1 "real" covariate beta(0.1,0.4)
-  \item 2 correlated covariates
-  \item select number of terms by AIC
+  \item 1 "real" continuous covariate  -- beta(0.1,0.4)
+  \item 2 correlated "fake" covariates
+  \item select terms by AIC
+  \item $\sim$95 samples per realisation
 \end{itemize}
 \end{column}%
 \hfill%
@@ -132,12 +133,15 @@ print(pcv)
   - Principle components
     * fast, simple, most people know about it
     * "derived" covariates -- no change in fitting procedure
+    * *only* covariates, **not** distance
+  - standardise covariates $\Rightarrow \mathcal{Z}$
   - take $\mathcal{Z}^\text{T}\mathcal{Z} = U^\text{T}\Lambda U$
   - new covariates $z_j^* = \mathcal{Z}\mathbf{u}_j$
-  - *only* covariates, **not** distance
+  - select new PCA covars in order
+    * using all gives same fit as no-PCA model
 
 
-## Simulation revisit
+## Simulation revisit - CV($p$)
 
 ```{r plotpca, include=FALSE, fig.width=7, fig.height=4, fig.cap="",dpi=120,plot=TRUE}
 results.PCA <- results[results$N==1000,]
@@ -154,33 +158,191 @@ print(pcv)
 \includegraphics[width=\textwidth]{figure/plotpca.png}
 
 
-## A simple example
+## Simulation revisit - AIC
+
+```{r plot-aic-winners, include=FALSE, fig.width=7, fig.height=4, fig.cap="",dpi=120,plot=TRUE}
+aicres <- results[results$parameter=="aic",]
+aicres <- aicres[aicres$N==1000,]
+aicres$model  <- sub("PCA","PCA\n",aicres$model)
+
+aic.winner <- function(x){
+  if(!all(is.na(x$value))){
+    return(as.character(x$model[which.min(x$value)]))
+  }else{
+    return(NA)
+  }
+}
+
+aicw <- ddply(aicres,.(sim,corr),aic.winner)
+
+pd <- ggplot(aicw)
+pd <- pd + geom_histogram(aes(V1))#,binwidth=0.01)
+pd <- pd + xlab("Model")
+pd <- pd + facet_wrap(~corr,ncol=3)
+print(pd)
+```
+
+\includegraphics[width=\textwidth]{figure/plot-aic-winners.png}
+
+
+## Black bears
 
   * Black bear data from Alaska
   * 301 observations from Piper Super Cub
-  * heavily left truncated (for this analysis)
+  * double observer ignored
+  * heavily left truncated (99m for this analysis)
   * 3 covariates:
-    - eff2trans
-    - pctcover
-    - pctsnow
+    - "search distance" (composite measure)
+    - % foliage cover
+    - % snow cover
+  * 1 covariate correlated 0.9 search distance
+
+\hfill \includegraphics[width=0.5\textwidth]{mybb.jpg}
+
+
+## Black bears - results
+
+  * fitting 3 covariate model (observed covars)
+    - 2 PCs better AIC than 1 PC
+    - 3 PC (full model) better than 2 in AIC
+    - 2 PC model give $\sim$ 2% saving in var
+  * fitting 4 covariates (observed + 1 correlated)
+    - 3 PC model better AIC than 2 or 1
+    - 3 PC model give $\sim$ 10% saving in var
+     
+
+
+
+```{r results-noextra-hidden, include=FALSE}
+#             p       p.se      AIC
+# allcov 0.3523942 0.02316806 3390.532
+# pca1   0.4326059 0.01961730 3468.661
+# pca2   0.3577041 0.02280119 3393.454 <<<
+# pca3   0.3523930 0.02316801 3390.532
+```
+
+```{r results-extra-hidden, include=FALSE}
+#                  p       p.se      AIC
+# allcov   0.3521192 0.02338857 3392.346
+# allcov.t 0.3523942 0.02316806 3390.532
+# pca1     0.3778260 0.02104195 3411.877 
+# pca2     0.3741386 0.02106807 3409.679
+# pca3     0.3690302 0.02153997 3406.481 <<<
+# pca4     0.3521192 0.02338811 3392.346
+```
+
+```{r bbres, include=FALSE}
+#$variance
+#         [,1]
+#[1,] 2672.683
+#
+#$partial
+#            [,1]
+#[1,] -777.821315
+#[2,]  505.710048
+#[3,] -120.590367
+#[4,]    9.677448
+#[5,]  438.831832
+#
+#
+#D(5)>
+#         [,1]
+#[1,] 5092.582
+#
+#D(5)> sum((1-model$fitted)/model$fitted^2)
+#[1] 2419.899
+```
+
+
+## What's going on?
+
+In terms of $\hat{N_c}$:
+
+\begin{align*}
+\text{var}(\hat{N_c}) &= w^2 \sum_i \hat{f}(0|\mathbf{z})^2 - \hat{N_c} + \left[\frac{\partial N_c}{\partial \theta}\right]^\text{T} H^{-1} \left[\frac{\partial N_c}{\partial \theta}\right]\\
+% &= \sum_i \left[\left(\frac{1}{\hat{p_i}}\right)^2 - \frac{1}{\hat{p_i}}\right] + \left[\frac{\partial N_c}{\partial \theta}\right]^\text{T} H^{-1} \left[\frac{\partial N_c}{\partial \theta}\right]
+&= \sum_i \frac{1-\hat{p}_i}{\hat{p}_i^2} + \left[\frac{\partial \hat{N_c}}{\partial \hat{\theta}}\right]^\text{T} H^{-1} \left[\frac{\partial \hat{N_c}}{\partial \hat{\theta}}\right]
+\end{align*}
 
 
 ## Further work
 
   * what about other situations?
+    - hazard-rate, etc. detection functions
+    - factor covariates
   * is it ever "bad" to do this?
-  * hazard-rate, etc. detection functions
-  * factor covariates
+  * is ridge/lasso more "efficient"?
+  * is anyone here doing "large" analyses?
+
+<br/>
+
+<br/>
+
+<p align="center">**Talk available at: `http://converged.yt/talks/dscorrcovar`**</p>
 
 
-## Conclusions
 
 
 
 
-## Aside: what causes high variance?
+```{r simres, include=FALSE}
+#$variance
+#         [,1]
+#[1,] 1744.201
+#
+#$partial
+#          [,1]
+#[1,] -419.6683
+#[2,]  329.7366
+#[3,]  230.0472
+#
+#
+#D(27)>
+#         [,1]
+#[1,] 3562.469
+#
+#D(27)> sum((1-model$fitted)/model$fitted^2)
+#[1] 1818.268
+#
+#############################################
+#D(5)>
+#$variance
+#         [,1]
+#[1,] 1096.765
+#
+#$partial
+#          [,1]
+#[1,] -400.7523
+#[2,]  298.2376
+#
+#
+#D(5)>
+#         [,1]
+#[1,] 3297.192
+#
+#sum((1-model$fitted)/model$fitted^2)
+#[1] 2200.427
+#
+#############################################
+#$variance
+#         [,1]
+#[1,] 1387.289
+#
+#$partial
+#          [,1]
+#[1,] -401.8247
+#[2,]  293.3195
+#[3,]  202.1095
+#[4,]  231.6329
+#
+#
+#D(5)>
+#         [,1]
+#[1,] 3574.138
+#
+#sum((1-model$fitted)/model$fitted^2)
+#[1] 2186.848
+```
 
-  * Just going to talk about $\hat{N_c}$
-  * $\text{var}(\hat{N_c}) = w^2 \sum_i \hat{f}(0|\mathbf{z})^2 - \hat{N_c} + \left[\frac{\partial N_c}{\partial \theta}\right]^\text{T} H^{-1} \left[\frac{\partial N_c}{\partial \theta}\right]$
-  $\text{var}(\hat{N_c}) = \sum_i \left[\left(\frac{1}{\hat{p_i}}\right)^2 - \frac{1}{\hat{p_i}}\right] + \left[\frac{\partial N_c}{\partial \theta}\right]^\text{T} H^{-1} \left[\frac{\partial N_c}{\partial \theta}\right]$
+
 
