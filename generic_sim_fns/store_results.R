@@ -51,7 +51,7 @@ store_results <- function(mod, pop.size, sim, corr=0, Ncov){
                c(other.vars, "cov1", cov1),
                c(other.vars, "cov2", cov2),
                c(other.vars, "aic", aic),
-               c(other.vars, "varp", varp))
+               c(other.vars, "varp", varp),
                c(other.vars, "varN", varN))
   return(res)
 }
