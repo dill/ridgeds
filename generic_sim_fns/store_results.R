@@ -25,8 +25,9 @@ store_results <- function(mod, pop.size, sim, corr=0, Ncov){
         # average p is n/Nhat
         p <- summary(mod$ddf)$average.p
 
-        # variance of average p
+        # variance of average p and Nhat
         varp <- summary(mod$ddf)$average.p.se
+        varN <- summary(mod$ddf)$Nhat.se
 
         # pull out parameters
         b0 <- mod$ddf$par[1]
@@ -51,5 +52,6 @@ store_results <- function(mod, pop.size, sim, corr=0, Ncov){
                c(other.vars, "cov2", cov2),
                c(other.vars, "aic", aic),
                c(other.vars, "varp", varp))
+               c(other.vars, "varN", varN))
   return(res)
 }
